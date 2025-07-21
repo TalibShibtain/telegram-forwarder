@@ -1,34 +1,37 @@
 import os
+import subprocess
 import asyncio
 import logging
 from telethon import TelegramClient, events
 from telegram import Bot
-from telegram.error import TelegramError
-import time
+
+# Decrypt encrypted session file before anything
+decrypt_cmd = [
+    "openssl", "enc", "-aes-256-cbc", "-d",
+    "-in", "forwarder.enc",
+    "-out", "forwarder_session.session",
+    "-k", os.environ['SESSION_PASS']
+]
+subprocess.run(decrypt_cmd, check=True)
 
 # Configure logging
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class TelegramForwarder:
     def __init__(self):
-        # Get credentials from environment variables (set in Render dashboard)
-        self.api_id = int(os.environ.get('API_ID'))
-        self.api_hash = os.environ.get('API_HASH')
-        self.bot_token = os.environ.get('BOT_TOKEN')
-        self.source_channel = os.environ.get('SOURCE_CHANNEL')
-        self.target_chat = os.environ.get('TARGET_CHAT')
-        
-        # Initialize clients
+        self.api_id = int(os.environ['API_ID'])
+        self.api_hash = os.environ['API_HASH']
+        self.bot_token = os.environ['BOT_TOKEN']
+        self.source_channel = os.environ['SOURCE_CHANNEL']
+        self.target_chat = os.environ['TARGET_CHAT']
+
         self.client = TelegramClient('forwarder_session', self.api_id, self.api_hash)
         self.bot = Bot(token=self.bot_token)
         self.message_count = 0
-        
-        logger.info("🤖 Telegram Forwarder initialized")
-        
+
+        logger.info("Telegram Forwarder initialized")
+
     async def forward_message(self, event):
         """Forward message from source to target"""
         try:
