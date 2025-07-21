@@ -7,7 +7,7 @@ from telegram import Bot
 
 # Decrypt encrypted session file before anything
 decrypt_cmd = [
-    "openssl", "enc", "-aes-256-cbc", "-d",
+    "openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-iter", "100000", "-d",
     "-in", "forwarder.enc",
     "-out", "forwarder_session.session",
     "-k", os.environ['SESSION_PASS']
